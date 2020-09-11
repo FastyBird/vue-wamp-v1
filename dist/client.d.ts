@@ -1,0 +1,32 @@
+import { OnCloseCallback, OnConnectCallback, OnOpenCallback, RpCallErrorCallback, RpCallSuccessCallback, SubscribeCallback, WampClientInterface, WampLoggerInterface } from './types';
+export declare class WampClient implements WampClientInterface {
+    private readonly wsuri;
+    private socket;
+    private sessionId;
+    private onOpenEvents;
+    private onCloseEvents;
+    private onConnectEvents;
+    private subscriptions;
+    private rpcCalls;
+    private isConnected;
+    private isConnecting;
+    private isLost;
+    private logger;
+    constructor(host: string, logger: WampLoggerInterface);
+    open(): void;
+    reconnect(): void;
+    close(reason?: number, message?: string): void;
+    subscribe(topic: string, handler: SubscribeCallback): boolean;
+    unsubscribe(topic: string): boolean;
+    isSubscribed(topic: string): boolean;
+    publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean;
+    call(topic: string, success?: RpCallSuccessCallback, error?: RpCallErrorCallback): boolean;
+    onOpenEvent(listener: OnOpenCallback): void;
+    onCloseEvent(listener: OnCloseCallback): void;
+    onConnectEvent(listener: OnConnectCallback): void;
+    offOpenEvent(listener: OnOpenCallback): void;
+    offCloseEvent(listener: OnCloseCallback): void;
+    offConnectEvent(listener: OnConnectCallback): void;
+    private rpcCallResult;
+    private send;
+}
