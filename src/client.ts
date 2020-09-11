@@ -256,7 +256,7 @@ export class WampClient implements WampClientInterface {
 
     for (let i = 0, len = this.subscriptions.length; i < len; i++) {
       if (this.subscriptions[i].topic === topic) {
-        for (let j = 0, len = this.subscriptions[i].callbacks.length; j < len; i++) {
+        for (let j = 0, callLen = this.subscriptions[i].callbacks.length; j < callLen; i++) {
           if (this.subscriptions[i].callbacks[j] === handler) {
             this.subscriptions[i].callbacks.splice(i, 1)
 
