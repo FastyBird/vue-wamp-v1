@@ -11,7 +11,8 @@ export interface RpcCallErrorInterface extends Error {
 }
 export interface WampSubscriptionInterface {
     topic: string;
-    callback: SubscribeCallback;
+    subscribed: boolean;
+    callbacks: Array<SubscribeCallback>;
 }
 export interface WampRpCallInterface {
     id: string;
@@ -23,7 +24,7 @@ export interface WampClientInterface {
     reconnect(): void;
     close(reason?: number, message?: string): void;
     subscribe(topic: string, handler: SubscribeCallback): boolean;
-    unsubscribe(topic: string): boolean;
+    unsubscribe(topic: string, handler: SubscribeCallback): boolean;
     isSubscribed(topic: string): boolean;
     publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean;
     call(topic: string, ...data: any): boolean;
@@ -36,8 +37,8 @@ export interface WampClientInterface {
 }
 export interface WampLoggerInterface {
     info(text: string, ...args: any[]): void;
-    error(...args: any[]): void;
-    warn(...args: any[]): void;
+    error(text: string, ...args: any[]): void;
+    warn(text: string, ...args: any[]): void;
     event(text: string, ...args: any[]): void;
 }
 export interface VueWampDefaults {

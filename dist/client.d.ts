@@ -17,7 +17,7 @@ export declare class WampClient implements WampClientInterface {
     reconnect(): void;
     close(reason?: number, message?: string): void;
     subscribe(topic: string, handler: SubscribeCallback): boolean;
-    unsubscribe(topic: string): boolean;
+    unsubscribe(topic: string, handler: SubscribeCallback): boolean;
     isSubscribed(topic: string): boolean;
     publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean;
     call(topic: string, success?: RpCallSuccessCallback, error?: RpCallErrorCallback): boolean;

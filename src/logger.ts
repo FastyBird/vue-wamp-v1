@@ -14,15 +14,15 @@ export class WampLogger implements WampLoggerInterface {
     }
   }
 
-  public error(...args: any[]): void {
+  public error(text: string, ...args: any[]): void {
     if (this.debug) {
-      window.console.error(this.prefix, args);
+      window.console.error(`${this.prefix}%c${text}`, 'color: red; font-weight: 600', 'color: #333333', args);
     }
   }
 
-  public warn(...args: any[]): void {
+  public warn(text: string, ...args: any[]): void {
     if (this.debug) {
-      window.console.warn(this.prefix, args);
+      window.console.warn(`${this.prefix}%c${text}`, 'color: yellow; font-weight: 600', 'color: #333333', args);
     }
   }
 

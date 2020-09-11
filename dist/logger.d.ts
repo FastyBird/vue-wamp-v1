@@ -4,7 +4,7 @@ export declare class WampLogger implements WampLoggerInterface {
     private prefix;
     constructor(debug: boolean);
     info(text: string, ...args: any[]): void;
-    error(...args: any[]): void;
-    warn(...args: any[]): void;
+    error(text: string, ...args: any[]): void;
+    warn(text: string, ...args: any[]): void;
     event(text: string, ...args: any[]): void;
 }

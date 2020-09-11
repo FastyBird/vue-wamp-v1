@@ -120,6 +120,12 @@ export class WampClient implements WampClientInterface {
           })
       }
 
+      this.subscriptions.forEach((subscription, index) => {
+        if (subscription.subscribed) {
+          this.subscriptions[index].subscribed = false
+        }
+      })
+
       this.isConnected = false
     })
 
@@ -156,6 +162,18 @@ export class WampClient implements WampClientInterface {
             .forEach((eventCallback): void => {
               eventCallback()
             })
+
+          this.subscriptions.forEach((subscription, index) => {
+            if (!subscription.subscribed) {
+              this.subscriptions[index].subscribed = this.send([5, subscription.topic])
+
+              if (!this.subscriptions[index].subscribed) {
+                this.logger.warn('$wamp::subscribe failed', subscription.topic)
+              } else {
+                this.logger.info('$wamp::subscribed', subscription.topic)
+              }
+            }
+          })
           break
 
         // RPC Call result
@@ -171,9 +189,11 @@ export class WampClient implements WampClientInterface {
         // Event
         case 8:
           this.subscriptions
-            .filter(({ topic }) => topic === message[0])
+            .filter(({topic}) => topic === message[0])
             .forEach((subscription): void => {
-              subscription.callback(message[1])
+              subscription.callbacks.forEach(callback => {
+                callback(message[1])
+              })
             })
           break
       }
@@ -201,30 +221,57 @@ export class WampClient implements WampClientInterface {
   public subscribe(topic: string, handler: SubscribeCallback): boolean {
     this.logger.event('$wamp.subscribe', topic)
 
-    if (typeof this.subscriptions.find((subscription): boolean => subscription.topic === topic) === 'undefined') {
+    if (!this.isSubscribed(topic)) {
       this.subscriptions.push({
         topic,
-        callback: handler,
+        subscribed: false,
+        callbacks: [],
       })
+    }
 
-      // Subscribe event code is 5
-      return this.send([5, topic])
+    const index = this.subscriptions.findIndex((subscription): boolean => subscription.topic === topic)
+
+    if (index !== -1) {
+      this.subscriptions[index].callbacks.push(handler)
+
+      if (this.isConnected) {
+        // Subscribe event code is 5
+        this.subscriptions[index].subscribed = this.send([5, topic])
+
+        if (!this.subscriptions[index].subscribed) {
+          this.logger.warn('$wamp::subscribe failed', topic)
+        } else {
+          this.logger.info('$wamp::subscribed', topic)
+        }
+
+        return this.subscriptions[index].subscribed
+      }
     }
 
     return false
   }
 
-  public unsubscribe(topic: string): boolean {
+  public unsubscribe(topic: string, handler: SubscribeCallback): boolean {
     this.logger.event('$wamp.unsubscribe', topic)
 
-    const index = this.subscriptions.findIndex((subscription): boolean => subscription.topic === topic)
+    for (let i = 0, len = this.subscriptions.length; i < len; i++) {
+      if (this.subscriptions[i].topic === topic) {
+        for (let j = 0, len = this.subscriptions[i].callbacks.length; j < len; i++) {
+          if (this.subscriptions[i].callbacks[j] === handler) {
+            this.subscriptions[i].callbacks.splice(i, 1)
 
-    if (index !== -1) {
-      this.subscriptions.splice(index, 1)
+            break
+          }
+        }
+
+        if (this.subscriptions[i].callbacks.length === 0 && this.isConnected) {
+          // Unsubscribe event code is 6
+          return this.send([6, topic])
+        }
+      }
     }
 
-    // Unsubscribe event code is 6
-    return this.send([6, topic])
+    return true
   }
 
   public isSubscribed(topic: string): boolean {
@@ -232,6 +279,10 @@ export class WampClient implements WampClientInterface {
   }
 
   public publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean {
+    if (!this.isConnected) {
+      return false
+    }
+
     this.logger.event('$wamp.publish', topic, event, exclude, eligible)
 
     const slice = [].slice
@@ -305,13 +356,13 @@ export class WampClient implements WampClientInterface {
   }
 
   private rpcCallResult(message: Array<any>, code: number): void {
-    const rpcCall = this.rpcCalls.find(({ id }): boolean => id === message[0])
+    const rpcCall = this.rpcCalls.find(({id}): boolean => id === message[0])
 
     if (typeof rpcCall === 'undefined') {
       return
     }
 
-    const index = this.rpcCalls.findIndex(({ id }): boolean => id === message[0])
+    const index = this.rpcCalls.findIndex(({id}): boolean => id === message[0])
 
     if (index !== -1) {
       this.rpcCalls.splice(index, 1)
