@@ -75,7 +75,7 @@ export class WampClient implements WampClientInterface {
   }
 
   public open(): void {
-    if (this.isConnected) {
+    if (this.isConnected || this.isConnecting) {
       return
     }
 
@@ -83,10 +83,10 @@ export class WampClient implements WampClientInterface {
       // Open WS connection to server
       this.socket = new WebSocket(this.wsuri)
     } catch (e) {
-      this.reconnect()
-
-      return
+      throw new Error('Connection could not be established')
     }
+
+    this.isConnecting = true
 
     // Connection established with WS server
     this.socket.addEventListener('open', () => {
@@ -94,11 +94,9 @@ export class WampClient implements WampClientInterface {
         .forEach((eventCallback): void => {
           eventCallback()
         })
-
-      this.isConnecting = true
     })
 
-    // Connection closed
+    // Connection closed by WS server
     this.socket.addEventListener('close', (event) => {
       if (this.isConnected) {
         if (event.wasClean) {
@@ -143,12 +141,10 @@ export class WampClient implements WampClientInterface {
 
           this.sessionId = message[0]
 
-          this.logger.event(`Connected! ${this.sessionId} : ${version} : ${server}`)
-
           if (this.isLost) {
-            this.logger.event('$wamp::opened re-established connection after lost')
+            this.logger.event('$wamp::opened re-established connection after lost', this.sessionId, version, server)
           } else {
-            this.logger.event('$wamp::opened handling backlog')
+            this.logger.event('$wamp::opened', this.sessionId, version, server)
           }
 
           this.isLost = false
@@ -195,8 +191,11 @@ export class WampClient implements WampClientInterface {
       this.socket.close(reason, message)
 
       this.socket = null
-      this.isConnected = false
     }
+
+    this.isLost = false
+    this.isConnecting = false
+    this.isConnected = false
   }
 
   public subscribe(topic: string, handler: SubscribeCallback): boolean {
@@ -340,16 +339,12 @@ export class WampClient implements WampClientInterface {
   }
 
   private send(message: Array<any>): boolean {
-    if (this.isConnecting) {
-      throw new Error('connecting')
-    } else if (!this.isConnected && !this.isConnecting) {
-      this.reconnect()
-
-      throw new Error('lost')
-    }
-
     if (this.socket === null) {
       throw new Error('not.connected')
+    } else if (this.isConnecting) {
+      throw new Error('connecting')
+    } else if (!this.isConnected) {
+      throw new Error('lost')
     }
 
     try {
