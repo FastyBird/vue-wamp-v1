@@ -148,9 +148,9 @@ export class WampClient implements WampClientInterface {
           this.sessionId = message[0]
 
           if (this.isLost) {
-            this.logger.event('$wamp::opened re-established connection after lost', this.sessionId, version, server)
+            this.logger.event('opened re-established connection after lost', this.sessionId, version, server)
           } else {
-            this.logger.event('$wamp::opened', this.sessionId, version, server)
+            this.logger.event('opened', this.sessionId, version, server)
           }
 
           this.isLost = false
@@ -168,9 +168,9 @@ export class WampClient implements WampClientInterface {
               this.subscriptions[index].subscribed = this.send([5, subscription.topic])
 
               if (!this.subscriptions[index].subscribed) {
-                this.logger.warn('$wamp::subscribe failed', subscription.topic)
+                this.logger.warn('subscribe failed', subscription.topic)
               } else {
-                this.logger.info('$wamp::subscribed', subscription.topic)
+                this.logger.info('subscribed', subscription.topic)
               }
             }
           })
@@ -239,9 +239,9 @@ export class WampClient implements WampClientInterface {
         this.subscriptions[index].subscribed = this.send([5, topic])
 
         if (!this.subscriptions[index].subscribed) {
-          this.logger.warn('$wamp::subscribe failed', topic)
+          this.logger.warn('subscribe failed', topic)
         } else {
-          this.logger.info('$wamp::subscribed', topic)
+          this.logger.info('subscribed', topic)
         }
 
         return this.subscriptions[index].subscribed
