@@ -1,4 +1,21 @@
 import Vue from 'vue'
-import VueWampV1 from 'vue-wamp-v1'
 
-Vue.use(VueWampV1, <%= serialize(options) %>)
+import VueWampV1 from './../src/index'
+import defOptions from './../src/options'
+
+const userOptions = JSON.parse('<%= JSON.stringify(options) %>')
+const options = {...defOptions, ...userOptions}
+const { namespace } = options
+const injectKey = '$' + namespace
+
+export default function NuxtWampPlugin(context, inject) {
+  Vue.use(VueWampV1, options)
+
+  if (!context.app[injectKey]) {
+    context.app[injectKey] = Vue[injectKey]
+  }
+
+  if (context.store && !context.store[injectKey]) {
+    context.store[injectKey] = Vue[injectKey]
+  }
+}

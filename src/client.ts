@@ -219,7 +219,7 @@ export class WampClient implements WampClientInterface {
   }
 
   public subscribe(topic: string, handler: SubscribeCallback): boolean {
-    this.logger.event('$wamp.subscribe', topic)
+    this.logger.event('subscribe', topic)
 
     if (!this.isSubscribed(topic)) {
       this.subscriptions.push({
@@ -252,7 +252,7 @@ export class WampClient implements WampClientInterface {
   }
 
   public unsubscribe(topic: string, handler: SubscribeCallback): boolean {
-    this.logger.event('$wamp.unsubscribe', topic)
+    this.logger.event('unsubscribe', topic)
 
     for (let i = 0, len = this.subscriptions.length; i < len; i++) {
       if (this.subscriptions[i].topic === topic) {
@@ -283,7 +283,7 @@ export class WampClient implements WampClientInterface {
       return false
     }
 
-    this.logger.event('$wamp.publish', topic, event, exclude, eligible)
+    this.logger.event('publish', topic, event, exclude, eligible)
 
     const slice = [].slice
 
@@ -292,7 +292,7 @@ export class WampClient implements WampClientInterface {
   }
 
   public call(topic: string, success?: RpCallSuccessCallback, error?: RpCallErrorCallback): boolean {
-    this.logger.event('$wamp.call', topic)
+    this.logger.event('call', topic)
 
     const slice = [].slice
 

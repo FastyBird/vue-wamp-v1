@@ -44,4 +44,7 @@ export interface WampLoggerInterface {
 export interface VueWampDefaults {
     wsuri: string;
     debug: boolean;
+    namespace: string;
+    autoReestablish: boolean;
+    autoCloseTimeout: number;
 }
