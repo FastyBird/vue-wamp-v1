@@ -1,5 +1,5 @@
 {
-  "name": "vue-wamp-v1",
+  "name": "@fastybird/vue-wamp-v1",
   "version": "0.1.0",
   "description": "WAMPv1 websockets communication for VUE app",
   "keywords": [
