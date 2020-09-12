@@ -1,7 +1,7 @@
 import Vue from 'vue'
 
-import VueWampV1 from './../src/index'
-import defOptions from './../src/options'
+import VueWampV1 from 'vue-wamp-v1'
+import defOptions from 'vue-wamp-v1/src/options'
 
 const userOptions = JSON.parse('<%= JSON.stringify(options) %>')
 const options = {...defOptions, ...userOptions}
