@@ -1,9 +1,11 @@
 import { VueConstructor } from 'vue'
 
-import { VueWampDefaults } from 'types'
+import { VueWampDefaults, WampClientInterface } from 'types'
 import { WampClient } from 'client'
 import { WampLogger } from 'logger'
 import defaultOptions from 'options'
+
+export { WampClientInterface, VueWampDefaults }
 
 const Plugin = {
   installed: false,

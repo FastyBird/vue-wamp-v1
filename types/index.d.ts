@@ -1,7 +1,7 @@
 import _Vue from 'vue'
 import { Store } from 'vuex'
 
-import { WampClientInterface } from 'types'
+import { WampClientInterface } from '../src/types'
 
 declare module 'vue/types/vue' {
   interface Vue {
