@@ -1,6 +1,6 @@
-import { WampLoggerInterface } from './types'
+import { WampLoggerInterface } from '@/lib/types'
 
-export class WampLogger implements WampLoggerInterface {
+export default class WampLogger implements WampLoggerInterface {
   private debug: boolean = false
   private prefix: string = '%cVue-Wamp: '
 

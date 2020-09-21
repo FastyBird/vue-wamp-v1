@@ -1,25 +1,23 @@
 import {
+  MessageCode,
   OnCloseCallback,
   OnConnectCallback,
-  OnOpenCallback,
-  RpCallErrorCallback,
-  RpCallSuccessCallback,
+  OnOpenCallback, RpCallPromise,
   RpcCallErrorInterface,
   SubscribeCallback,
   WampClientInterface,
   WampLoggerInterface,
   WampRpCallInterface,
   WampSubscriptionInterface,
-} from './types'
+} from '@/lib/types'
 
 class RpcCallError extends Error implements RpcCallErrorInterface {
-  public uri: string
+  public topic: string
+  public message: string
 
-  public details: string | null
+  public details: string | Array<any> | null
 
-  public exception: Error | null
-
-  constructor(uri: string, exception: Error | null, ...params: any) {
+  constructor(topic: string, message: string, ...params: any) {
     // Pass remaining arguments (including vendor specific ones) to parent constructor
     super(...params)
 
@@ -29,13 +27,13 @@ class RpcCallError extends Error implements RpcCallErrorInterface {
     }
 
     // Custom debugging information
-    this.uri = uri
-    this.exception = exception
+    this.topic = topic
+    this.message = message
     this.details = null
   }
 }
 
-export class WampClient implements WampClientInterface {
+export default class WampClient implements WampClientInterface {
   private readonly wsuri: string
 
   private socket: WebSocket | null
@@ -67,9 +65,9 @@ export class WampClient implements WampClientInterface {
     this.subscriptions = []
     this.rpcCalls = []
 
+    this.isLost = false
     this.isConnected = false
     this.isConnecting = false
-    this.isLost = false
 
     this.logger = logger
   }
@@ -129,17 +127,25 @@ export class WampClient implements WampClientInterface {
       this.isConnected = false
     })
 
-    this.socket.addEventListener('message', (event) => {
-      // Parse received message
-      const message = JSON.parse(event.data)
-      // On first position is message type definition
-      const code = message.shift()
+    this.socket.addEventListener('message', (event): void => {
+      let message: Array<any> = []
+
+      try {
+        // Parse received message
+        message = JSON.parse(event.data)
+      } catch (e) {
+        throw new Error(`Received message is not valid JSON`)
+      }
+
+      // On first position is message code
+      const code: MessageCode = message.shift()
 
       switch (code) {
         // Welcome
-        case 0:
-          const version = message[1]
-          const server = message[2]
+        // [code: number, wamp session: string, wamp version: number, server info: string]
+        case MessageCode.MSG_WELCOME:
+          const version: number = message[1]
+          const server: string = message[2]
 
           if (version !== 1) {
             throw new Error(`Server "${server}" uses incompatible protocol version ${version}`)
@@ -154,7 +160,6 @@ export class WampClient implements WampClientInterface {
           }
 
           this.isLost = false
-
           this.isConnecting = false
           this.isConnected = true
 
@@ -163,31 +168,32 @@ export class WampClient implements WampClientInterface {
               eventCallback()
             })
 
-          this.subscriptions.forEach((subscription, index) => {
-            if (!subscription.subscribed) {
-              this.subscriptions[index].subscribed = this.send([5, subscription.topic])
+          this.subscriptions
+            .forEach((subscription, index) => {
+              if (!subscription.subscribed) {
+                this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, subscription.topic])
 
-              if (!this.subscriptions[index].subscribed) {
-                this.logger.warn('subscribe failed', subscription.topic)
-              } else {
-                this.logger.info('subscribed', subscription.topic)
+                if (!this.subscriptions[index].subscribed) {
+                  this.logger.warn('subscribe failed', subscription.topic)
+                } else {
+                  this.logger.info('subscribed', subscription.topic)
+                }
               }
-            }
-          })
+            })
           break
 
         // RPC Call result
-        case 3:
+        case MessageCode.MSG_CALL_RESULT:
           this.rpcCallResult(message, code)
           break
 
         // RPC Call error
-        case 4:
+        case MessageCode.MSG_CALL_ERROR:
           this.rpcCallResult(message, code)
           break
 
         // Event
-        case 8:
+        case MessageCode.MSG_EVENT:
           this.subscriptions
             .filter(({topic}) => topic === message[0])
             .forEach((subscription): void => {
@@ -235,8 +241,7 @@ export class WampClient implements WampClientInterface {
       this.subscriptions[index].callbacks.push(handler)
 
       if (this.isConnected) {
-        // Subscribe event code is 5
-        this.subscriptions[index].subscribed = this.send([5, topic])
+        this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, topic])
 
         if (!this.subscriptions[index].subscribed) {
           this.logger.warn('subscribe failed', topic)
@@ -265,8 +270,7 @@ export class WampClient implements WampClientInterface {
         }
 
         if (this.subscriptions[i].callbacks.length === 0 && this.isConnected) {
-          // Unsubscribe event code is 6
-          return this.send([6, topic])
+          return this.send([MessageCode.MSG_UNSUBSCRIBE, topic])
         }
       }
     }
@@ -279,38 +283,29 @@ export class WampClient implements WampClientInterface {
   }
 
   public publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean {
-    if (!this.isConnected) {
-      return false
-    }
-
     this.logger.event('publish', topic, event, exclude, eligible)
 
-    const slice = [].slice
-
-    // Publish event code is 7
-    return this.send([7].concat(slice.call(arguments)))
+    return this.send([MessageCode.MSG_PUBLISH, event, exclude, eligible])
   }
 
-  public call(topic: string, success?: RpCallSuccessCallback, error?: RpCallErrorCallback): boolean {
+  public call(topic: string, ...data: any): RpCallPromise {
     this.logger.event('call', topic)
-
-    const slice = [].slice
-
-    const args = slice.call(arguments, 1)
 
     const callId = Math.random().toString(36).substring(2)
 
-    const result = this.send([2, callId, topic].concat(args))
+    return new Promise((resolve, reject) => {
+      const result = this.send([MessageCode.MSG_CALL, callId, topic].concat(data))
 
-    if (result) {
-      this.rpcCalls.push({
-        id: callId,
-        success,
-        error,
-      })
-    }
-
-    return result
+      if (result) {
+        this.rpcCalls.push({
+          id: callId,
+          resolve,
+          reject,
+        })
+      } else {
+        reject(new Error('RPC not processed'))
+      }
+    })
   }
 
   public onOpenEvent(listener: OnOpenCallback): void {
@@ -355,6 +350,49 @@ export class WampClient implements WampClientInterface {
     }
   }
 
+  /**
+   * Send data via websockets
+   *
+   * @param {Array<any>} message
+   *
+   * @return boolean
+   *
+   * @private
+   */
+  private send(message: Array<any>): boolean {
+    if (this.socket === null) {
+      this.logger.error('not.connected')
+
+      return false
+    } else if (this.isConnecting) {
+      this.logger.error('connecting')
+
+      return false
+    } else if (!this.isConnected) {
+      this.logger.error('lost')
+
+      return false
+    } else {
+      try {
+        this.socket.send(JSON.stringify(message))
+
+        return true
+      } catch (e) {
+        this.logger.error('send.error')
+
+        return false
+      }
+    }
+  }
+
+  /**
+   * Handle RPC result
+   *
+   * @param {Array<any>} message
+   * @param {number} code
+   *
+   * @private
+   */
   private rpcCallResult(message: Array<any>, code: number): void {
     const rpcCall = this.rpcCalls.find(({id}): boolean => id === message[0])
 
@@ -366,9 +404,11 @@ export class WampClient implements WampClientInterface {
 
     if (index !== -1) {
       this.rpcCalls.splice(index, 1)
+    } else {
+      this.rpcCalls = []
     }
 
-    if (code === 4) {
+    if (code === MessageCode.MSG_CALL_ERROR) {
       const error = new RpcCallError(message[1], message[2])
 
       if (message.length === 4) {
@@ -376,34 +416,19 @@ export class WampClient implements WampClientInterface {
       }
 
       if (
-        Object.prototype.hasOwnProperty.call(rpcCall, 'error') &&
-        typeof rpcCall.error !== 'undefined'
+        Object.prototype.hasOwnProperty.call(rpcCall, 'reject') &&
+        typeof rpcCall.reject !== 'undefined'
       ) {
-        rpcCall.error(error)
+        rpcCall.reject(error)
       }
     } else if (
-      Object.prototype.hasOwnProperty.call(rpcCall, 'success') &&
-      typeof rpcCall.success !== 'undefined'
+      code === MessageCode.MSG_CALL_RESULT &&
+      Object.prototype.hasOwnProperty.call(rpcCall, 'resolve') &&
+      typeof rpcCall.resolve !== 'undefined'
     ) {
-      rpcCall.success(message[1])
-    }
-  }
-
-  private send(message: Array<any>): boolean {
-    if (this.socket === null) {
-      throw new Error('not.connected')
-    } else if (this.isConnecting) {
-      throw new Error('connecting')
-    } else if (!this.isConnected) {
-      throw new Error('lost')
-    }
-
-    try {
-      this.socket.send(JSON.stringify(message))
-
-      return true
-    } catch (e) {
-      throw new Error('send.error')
+      rpcCall.resolve({
+        data: message[1]
+      })
     }
   }
 }

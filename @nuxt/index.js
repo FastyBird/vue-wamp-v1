@@ -6,7 +6,7 @@ module.exports = function nuxtVueVueWampV1(moduleOptions) {
   this.addPlugin({
     ssr: false,
     src: resolve(__dirname, 'plugin.js'),
-    fileName: 'vue-wamp-v1.js',
+    fileName: 'vue-wamp-v1.esm.js',
     options,
   })
 }

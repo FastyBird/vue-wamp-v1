@@ -9,45 +9,63 @@
     "websockets",
     "ws"
   ],
-
   "homepage": "https://fastybird.com",
-
   "bugs": "https://github.com/FastyBird/vue-wamp-v1/issues",
-
   "license": "Apache-2.0",
-
   "author": {
     "name": "FastyBird s.r.o.",
     "email": "info@fastybird.com",
     "url": "https://fastybird.com/"
   },
-
   "repository": {
     "type": "git",
     "url": "https://github.com/FastyBird/vue-wamp-v1.git"
   },
-
-  "devDependencies": {
-    "vue": "^2.6.11",
-    "microbundle": "^0.12.3"
-  },
-
-  "source": "src/index.ts",
-
-  "main": "dist/vue-wamp-v1.js",
-  "module": "dist/vue-wamp-v1.module.js",
-  "unpkg": "dist/vue-wamp-v1.umd.js",
-  "typings": "dist/index.d.ts",
-
-  "scripts": {
-    "build": "microbundle src/index.ts --name VueWampV1",
-    "dev": "microbundle watch"
-  },
-
+  "main": "dist/vue-wamp-v1.ssr.js",
+  "browser": "dist/vue-wamp-v1.esm.js",
+  "module": "dist/vue-wamp-v1.esm.js",
+  "unpkg": "dist/vue-wamp-v1.min.js",
+  "types": "vue-wamp-v1.d.ts",
   "files": [
-    "dist",
-    "nuxt"
+    "dist/*",
+    "vue-wamp-v1.d.ts"
   ],
-
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
+  "scripts": {
+    "build": "cross-env NODE_ENV=production rollup --config build/rollup.config.js",
+    "build:ssr": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format cjs",
+    "build:es": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format es",
+    "build:unpkg": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format iife"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.9.5",
+    "@babel/preset-typescript": "^7.9.0",
+    "@rollup/plugin-alias": "^2.2.0",
+    "@rollup/plugin-commonjs": "^11.1.0",
+    "@rollup/plugin-replace": "^2.3.2",
+    "@vue/cli-plugin-babel": "^4.3.1",
+    "@vue/cli-plugin-typescript": "^4.3.1",
+    "@vue/cli-service": "^4.3.1",
+    "cross-env": "^7.0.2",
+    "minimist": "^1.2.5",
+    "rollup": "^2.7.3",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-terser": "^5.3.0",
+    "rollup-plugin-vue": "^5.1.6",
+    "typescript": "^3.8.3",
+    "vue": "^2.6.11",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "peerDependencies": {
+    "vue": "^2.6.11"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }

@@ -1,15 +1,20 @@
 export type OnOpenCallback = () => void
 export type OnCloseCallback = (code: number, reason: string | null) => void
 export type OnConnectCallback = () => void
+
 export type SubscribeCallback = (content: string) => void
 
-export type RpCallSuccessCallback = (response: string) => void
-export type RpCallErrorCallback = (error: RpcCallErrorInterface) => void
+export interface RpCallResponse<T = any> {
+  data: T
+}
+
+export interface RpCallPromise<T = any> extends Promise<RpCallResponse<T>> {
+}
 
 export interface RpcCallErrorInterface extends Error {
-  uri: string
-  details: string | null
-  exception: Error | null
+  topic: string
+  message: string
+  details: string | Array<any> | null
 }
 
 export interface WampSubscriptionInterface {
@@ -20,8 +25,8 @@ export interface WampSubscriptionInterface {
 
 export interface WampRpCallInterface {
   id: string
-  success?: RpCallSuccessCallback
-  error?: RpCallErrorCallback
+  resolve: any
+  reject: any
 }
 
 export interface WampClientInterface {
@@ -39,7 +44,7 @@ export interface WampClientInterface {
 
   publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean
 
-  call(topic: string, ...data: any): boolean
+  call(topic: string, ...data: any): RpCallPromise
 
   onOpenEvent(listener: OnOpenCallback): void
 
@@ -64,10 +69,22 @@ export interface WampLoggerInterface {
   event(text: string, ...args: any[]): void
 }
 
-export interface VueWampDefaults {
+export interface WampClientOptionsInterface {
   wsuri: string
   debug: boolean
   namespace: string,
   autoReestablish: boolean,
   autoCloseTimeout: number,
+}
+
+export enum MessageCode {
+  MSG_WELCOME = 0,
+  MSG_PREFIX = 1,
+  MSG_CALL = 2,
+  MSG_CALL_RESULT = 3,
+  MSG_CALL_ERROR = 4,
+  MSG_SUBSCRIBE = 5,
+  MSG_UNSUBSCRIBE = 6,
+  MSG_PUBLISH = 7,
+  MSG_EVENT = 8,
 }
