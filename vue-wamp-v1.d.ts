@@ -1,5 +1,5 @@
 import Vue, {PluginFunction, VueConstructor} from "vue";
-import {RpCallResponse, WampClientInterface} from "@/lib/types";
+import {WampClientInterface, WampClientOptionsInterface, RpCallResponse, RpCallPromise} from "./src/lib/types";
 
 interface InstallFunction extends PluginFunction<any> {
   installed?: boolean;
@@ -34,4 +34,4 @@ declare module '@nuxt/types' {
 
 export default VueWampV1;
 
-export { WampClientInterface, WampClientOptionsInterface, RpCallResponse, RpCallPromise } from '@/lib/types';
+export { WampClientInterface, WampClientOptionsInterface, RpCallResponse, RpCallPromise };
