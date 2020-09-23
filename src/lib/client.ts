@@ -282,7 +282,7 @@ export default class WampClient implements WampClientInterface {
     return this.subscriptions.findIndex((subscription): boolean => subscription.topic === topic) !== -1
   }
 
-  public publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean {
+  public publish(topic: string, event: string, exclude?: Array<string> | null, eligible?: Array<string> | null): boolean {
     this.logger.event('publish', topic, event, exclude, eligible)
 
     return this.send([MessageCode.MSG_PUBLISH, event, exclude, eligible])

@@ -42,7 +42,7 @@ export interface WampClientInterface {
 
   isSubscribed(topic: string): boolean
 
-  publish(topic: string, event: string, exclude: Array<string> | null, eligible: Array<string> | null): boolean
+  publish(topic: string, event: string, exclude?: Array<string> | null, eligible?: Array<string> | null): boolean
 
   call(topic: string, ...data: any): RpCallPromise
 
