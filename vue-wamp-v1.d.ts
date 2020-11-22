@@ -1,4 +1,5 @@
 import Vue, { PluginFunction, VueConstructor } from 'vue';
+
 import { WampClientInterface, WampClientOptionsInterface, RpCallResponse, RpCallPromise } from './src/lib/types';
 
 interface InstallFunction extends PluginFunction<any> {
