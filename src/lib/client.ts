@@ -427,7 +427,7 @@ export default class WampClient implements WampClientInterface {
       typeof rpcCall.resolve !== 'undefined'
     ) {
       rpcCall.resolve({
-        data: message[1]
+        data: message[1],
       })
     }
   }

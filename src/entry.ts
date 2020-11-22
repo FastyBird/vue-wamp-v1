@@ -2,7 +2,7 @@ import _Vue, { PluginFunction } from 'vue';
 
 // Import library
 import WampClient from '@/lib/client';
-import WampLogger  from '@/lib/logger';
+import WampLogger from '@/lib/logger';
 import defaultOptions from '@/lib/options';
 
 // Define typescript interfaces for autoinstaller
