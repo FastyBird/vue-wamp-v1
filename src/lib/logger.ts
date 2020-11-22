@@ -1,4 +1,4 @@
-import { WampLoggerInterface } from '@/lib/types'
+import { WampLoggerInterface } from '@/lib/types.d.ts'
 
 export default class WampLogger implements WampLoggerInterface {
   private debug: boolean = false

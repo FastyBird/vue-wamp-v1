@@ -9,7 +9,7 @@ import {
   WampLoggerInterface,
   WampRpCallInterface,
   WampSubscriptionInterface,
-} from '@/lib/types'
+} from '@/lib/types.d.ts'
 
 class RpcCallError extends Error implements RpcCallErrorInterface {
   public topic: string
