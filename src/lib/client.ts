@@ -46,9 +46,9 @@ export default class WampClient implements WampClientInterface {
   private subscriptions: Array<WampSubscriptionInterface>
   private rpcCalls: Array<WampRpCallInterface>
 
-  private isConnected: boolean
-  private isConnecting: boolean
-  private isLost: boolean
+  public isConnected: boolean
+  public isConnecting: boolean
+  public isLost: boolean
 
   private logger: WampLoggerInterface
 

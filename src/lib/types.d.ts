@@ -30,6 +30,10 @@ export interface WampRpCallInterface {
 }
 
 export interface WampClientInterface {
+  isConnected: boolean
+  isConnecting: boolean
+  isLost: boolean
+
   open(): void
 
   reconnect(): void
