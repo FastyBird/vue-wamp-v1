@@ -1,6 +1,7 @@
 export type OnOpenCallback = () => void
 export type OnCloseCallback = (code: number, reason: string | null) => void
 export type OnConnectCallback = () => void
+export type OnDisconnectCallback = () => void
 
 export type SubscribeCallback = (content: string) => void
 
@@ -30,10 +31,6 @@ export interface WampRpCallInterface {
 }
 
 export interface WampClientInterface {
-  isConnected: boolean
-  isConnecting: boolean
-  isLost: boolean
-
   open(): void
 
   reconnect(): void
@@ -56,11 +53,15 @@ export interface WampClientInterface {
 
   onConnectEvent(listener: OnConnectCallback): void
 
+  onDisconnectEvent(listener: OnDisconnectCallback): void
+
   offOpenEvent(listener: OnOpenCallback): void
 
   offCloseEvent(listener: OnCloseCallback): void
 
   offConnectEvent(listener: OnConnectCallback): void
+
+  offDisconnectEvent(listener: OnDisconnectCallback): void
 }
 
 export interface WampLoggerInterface {

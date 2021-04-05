@@ -1,7 +1,7 @@
 import {
   MessageCode,
   OnCloseCallback,
-  OnConnectCallback,
+  OnConnectCallback, OnDisconnectCallback,
   OnOpenCallback, RpCallPromise,
   RpcCallErrorInterface,
   SubscribeCallback,
@@ -42,13 +42,14 @@ export default class WampClient implements WampClientInterface {
   private onOpenEvents: Array<OnOpenCallback>
   private onCloseEvents: Array<OnCloseCallback>
   private onConnectEvents: Array<OnConnectCallback>
+  private onDisconnectEvents: Array<OnDisconnectCallback>
 
   private subscriptions: Array<WampSubscriptionInterface>
   private rpcCalls: Array<WampRpCallInterface>
 
-  public isConnected: boolean
-  public isConnecting: boolean
-  public isLost: boolean
+  private isConnected: boolean
+  private isConnecting: boolean
+  private isLost: boolean
 
   private logger: WampLoggerInterface
 
@@ -61,6 +62,7 @@ export default class WampClient implements WampClientInterface {
     this.onOpenEvents = []
     this.onCloseEvents = []
     this.onConnectEvents = []
+    this.onDisconnectEvents = []
 
     this.subscriptions = []
     this.rpcCalls = []
@@ -97,6 +99,11 @@ export default class WampClient implements WampClientInterface {
     // Connection closed by WS server
     this.socket.addEventListener('close', (event) => {
       if (this.isConnected) {
+        this.onDisconnectEvents
+          .forEach((eventCallback): void => {
+            eventCallback()
+          })
+
         if (event.wasClean) {
           // Connection was closed cleanly (closing HS was performed)
           this.onCloseEvents
@@ -320,6 +327,10 @@ export default class WampClient implements WampClientInterface {
     this.onConnectEvents.push(listener)
   }
 
+  public onDisconnectEvent(listener: OnDisconnectCallback): void {
+    this.onDisconnectEvents.push(listener)
+  }
+
   public offOpenEvent(listener: OnOpenCallback): void {
     for (let i = 0, len = this.onOpenEvents.length; i < len; i++) {
       if (this.onOpenEvents[i] === listener) {
@@ -344,6 +355,16 @@ export default class WampClient implements WampClientInterface {
     for (let i = 0, len = this.onConnectEvents.length; i < len; i++) {
       if (this.onConnectEvents[i] === listener) {
         this.onConnectEvents.splice(i, 1)
+
+        break
+      }
+    }
+  }
+
+  public offDisconnectEvent(listener: OnDisconnectCallback): void {
+    for (let i = 0, len = this.onDisconnectEvents.length; i < len; i++) {
+      if (this.onDisconnectEvents[i] === listener) {
+        this.onDisconnectEvents.splice(i, 1)
 
         break
       }
