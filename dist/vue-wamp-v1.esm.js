@@ -64,6 +64,8 @@ class WampClient {
 
     _defineProperty(this, "onConnectEvents", void 0);
 
+    _defineProperty(this, "onDisconnectEvents", void 0);
+
     _defineProperty(this, "subscriptions", void 0);
 
     _defineProperty(this, "rpcCalls", void 0);
@@ -82,6 +84,7 @@ class WampClient {
     this.onOpenEvents = [];
     this.onCloseEvents = [];
     this.onConnectEvents = [];
+    this.onDisconnectEvents = [];
     this.subscriptions = [];
     this.rpcCalls = [];
     this.isLost = false;
@@ -112,6 +115,10 @@ class WampClient {
 
     this.socket.addEventListener('close', event => {
       if (this.isConnected) {
+        this.onDisconnectEvents.forEach(eventCallback => {
+          eventCallback();
+        });
+
         if (event.wasClean) {
           // Connection was closed cleanly (closing HS was performed)
           this.onCloseEvents.forEach(eventCallback => {
@@ -321,6 +328,10 @@ class WampClient {
     this.onConnectEvents.push(listener);
   }
 
+  onDisconnectEvent(listener) {
+    this.onDisconnectEvents.push(listener);
+  }
+
   offOpenEvent(listener) {
     for (let i = 0, len = this.onOpenEvents.length; i < len; i++) {
       if (this.onOpenEvents[i] === listener) {
@@ -343,6 +354,15 @@ class WampClient {
     for (let i = 0, len = this.onConnectEvents.length; i < len; i++) {
       if (this.onConnectEvents[i] === listener) {
         this.onConnectEvents.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  offDisconnectEvent(listener) {
+    for (let i = 0, len = this.onDisconnectEvents.length; i < len; i++) {
+      if (this.onDisconnectEvents[i] === listener) {
+        this.onDisconnectEvents.splice(i, 1);
         break;
       }
     }

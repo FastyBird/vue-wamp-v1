@@ -266,6 +266,8 @@ var WampClient = /*#__PURE__*/function () {
 
     _defineProperty(this, "onConnectEvents", void 0);
 
+    _defineProperty(this, "onDisconnectEvents", void 0);
+
     _defineProperty(this, "subscriptions", void 0);
 
     _defineProperty(this, "rpcCalls", void 0);
@@ -284,6 +286,7 @@ var WampClient = /*#__PURE__*/function () {
     this.onOpenEvents = [];
     this.onCloseEvents = [];
     this.onConnectEvents = [];
+    this.onDisconnectEvents = [];
     this.subscriptions = [];
     this.rpcCalls = [];
     this.isLost = false;
@@ -318,6 +321,10 @@ var WampClient = /*#__PURE__*/function () {
 
       this.socket.addEventListener('close', function (event) {
         if (_this2.isConnected) {
+          _this2.onDisconnectEvents.forEach(function (eventCallback) {
+            eventCallback();
+          });
+
           if (event.wasClean) {
             // Connection was closed cleanly (closing HS was performed)
             _this2.onCloseEvents.forEach(function (eventCallback) {
@@ -555,6 +562,11 @@ var WampClient = /*#__PURE__*/function () {
       this.onConnectEvents.push(listener);
     }
   }, {
+    key: "onDisconnectEvent",
+    value: function onDisconnectEvent(listener) {
+      this.onDisconnectEvents.push(listener);
+    }
+  }, {
     key: "offOpenEvent",
     value: function offOpenEvent(listener) {
       for (var i = 0, len = this.onOpenEvents.length; i < len; i++) {
@@ -580,6 +592,16 @@ var WampClient = /*#__PURE__*/function () {
       for (var i = 0, len = this.onConnectEvents.length; i < len; i++) {
         if (this.onConnectEvents[i] === listener) {
           this.onConnectEvents.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }, {
+    key: "offDisconnectEvent",
+    value: function offDisconnectEvent(listener) {
+      for (var i = 0, len = this.onDisconnectEvents.length; i < len; i++) {
+        if (this.onDisconnectEvents[i] === listener) {
+          this.onDisconnectEvents.splice(i, 1);
           break;
         }
       }
