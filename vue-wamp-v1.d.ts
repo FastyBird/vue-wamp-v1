@@ -31,6 +31,10 @@ declare module '@nuxt/types' {
   interface NuxtAppOptions {
     $wamp: WampClientInterface
   }
+
+  interface Context {
+    $wamp: WampClientInterface
+  }
 }
 
 export default VueWampV1;
