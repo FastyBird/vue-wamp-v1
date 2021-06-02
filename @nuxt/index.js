@@ -1,6 +1,6 @@
 const { resolve } = require('path')
 
-module.exports = function nuxtVueVueWampV1(moduleOptions) {
+module.exports = function nuxtVueWampV1(moduleOptions) {
   const options = this.options.wamp || moduleOptions
 
   this.addPlugin({

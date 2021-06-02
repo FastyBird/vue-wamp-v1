@@ -3,8 +3,14 @@ import _Vue from 'vue';
 // Import library
 import WampClient from '@/lib/client';
 import WampLogger from '@/lib/logger';
-import defaultOptions from '@/lib/options';
 import { InstallFunction } from '@/types/vue-wamp-v1'
+
+export const defaultOptions = {
+    namespace: 'wamp',
+    autoReestablish: true,
+    autoCloseTimeout: -1,
+    debug: false,
+}
 
 // install function executed by Vue.use()
 const install: InstallFunction = function installVueWampV1(Vue: typeof _Vue, options) {

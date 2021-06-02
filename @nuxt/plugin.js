@@ -1,10 +1,9 @@
 import Vue from 'vue'
 
-import VueWampV1 from '@fastybird/vue-wamp-v1'
-import defOptions from '@fastybird/vue-wamp-v1/src/lib/options'
+import VueWampV1, { defaultOptions } from '@fastybird/vue-wamp-v1'
 
 const userOptions = JSON.parse('<%= JSON.stringify(options) %>')
-const options = {...defOptions, ...userOptions}
+const options = {...defaultOptions, ...userOptions}
 const { namespace } = options
 const injectKey = '$' + namespace
 

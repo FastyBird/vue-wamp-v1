@@ -27,7 +27,8 @@
   "unpkg": "dist/vue-wamp-v1.min.js",
   "types": "dist/vue-wamp-v1.d.ts",
   "files": [
-    "dist/*"
+    "dist/*",
+    "@nuxt/*"
   ],
   "scripts": {
     "build": "cross-env NODE_ENV=production rollup --config build/rollup.config.js",
