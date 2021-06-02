@@ -1,15 +1,10 @@
-import _Vue, { PluginFunction } from 'vue';
+import _Vue from 'vue';
 
 // Import library
 import WampClient from '@/lib/client';
 import WampLogger from '@/lib/logger';
 import defaultOptions from '@/lib/options';
-
-// Define typescript interfaces for autoinstaller
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface InstallFunction extends PluginFunction<any> {
-  installed?: boolean;
-}
+import { InstallFunction } from '@/types/vue-wamp-v1'
 
 // install function executed by Vue.use()
 const install: InstallFunction = function installVueWampV1(Vue: typeof _Vue, options) {
@@ -57,6 +52,7 @@ const plugin = {
 // To auto-install on non-es builds, when vue is found
 // eslint-disable-next-line no-redeclare
 /* global window, global */
+// @ts-ignore
 if ('false' === process.env.ES_BUILD) {
   let GlobalVue = null;
   if (typeof window !== 'undefined') {

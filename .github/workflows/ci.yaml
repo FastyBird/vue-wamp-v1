@@ -1,0 +1,100 @@
+name: "build"
+
+on:
+  pull_request:
+    paths-ignore:
+      - ".docs/**"
+  push:
+    branches:
+      - "master"
+    tags:
+      - v*
+  schedule:
+    - cron: "0 8 * * 1" # At 08:00 on Monday
+
+env:
+  extensions: "json"
+  cache-version: "1"
+  composer-version: "v1"
+  composer-install: "composer update --no-interaction --no-progress --no-suggest --prefer-dist --prefer-stable"
+  coverage: "none"
+
+jobs:
+  publish-npmjs:
+    name: "Build library and publish it to NPM"
+    runs-on: "${{ matrix.operating-system }}"
+
+    strategy:
+      matrix:
+        operating-system: ["ubuntu-latest"]
+
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
+
+      - name: "Install node"
+        uses: "actions/setup-node@v1"
+        with:
+          node-version: "12"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: "Extract version"
+        uses: "battila7/get-version-action@v2"
+        id: "get_version"
+
+      # Install package dependencies
+      - run: yarn install
+      # Set up git since we will later push to the repo
+      - run: git config --global user.name "GitHub CD bot"
+      - run: git config --global user.email "code@fastybird.com"
+      # Upgrade npm version in package.json to the tag used in the release
+      - run: npm version ${{ steps.get_version.outputs.version-without-v }} --allow-same-version
+      # Build the project
+      - run: yarn build
+      # Publish to NPM -> there is one caveat, continue reading for the fix
+      - run: npm publish --access public
+        env:
+          # Use a token to publish to NPM
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+
+  publish-github:
+    name: "Build library and publish it to Github packages"
+    runs-on: "${{ matrix.operating-system }}"
+    needs: ["publish-npmjs"]
+
+    strategy:
+      matrix:
+        operating-system: ["ubuntu-latest"]
+
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
+
+      - name: "Install node"
+        uses: "actions/setup-node@v1"
+        with:
+          node-version: "12"
+          registry-url: "https://npm.pkg.github.com"
+
+      - name: "Extract version"
+        uses: "battila7/get-version-action@v2"
+        id: "get_version"
+
+      # Install package dependencies
+      - run: yarn install
+      # Set up git since we will later push to the repo
+      - run: git config --global user.name "GitHub CD bot"
+      - run: git config --global user.email "code@fastybird.com"
+      # Upgrade npm version in package.json to the tag used in the release
+      - run: npm version ${{ steps.get_version.outputs.version-without-v }} --allow-same-version
+      # Build the project
+      - run: yarn build
+      # Publish to NPM -> there is one caveat, continue reading for the fix
+      - run: npm publish --access public
+        env:
+          # Use a token to publish to GH NPM
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-import { WampLoggerInterface } from '@/lib/types.d.ts'
+import { WampLoggerInterface } from '@/types/vue-wamp-v1'
 
 export default class WampLogger implements WampLoggerInterface {
   private debug: boolean = false

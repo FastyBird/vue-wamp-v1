@@ -1,5 +1,4 @@
 import {
-  MessageCode,
   OnCloseCallback,
   OnConnectCallback, OnDisconnectCallback,
   OnOpenCallback, RpCallPromise,
@@ -9,7 +8,19 @@ import {
   WampLoggerInterface,
   WampRpCallInterface,
   WampSubscriptionInterface,
-} from '@/lib/types.d.ts'
+} from '@/types/vue-wamp-v1'
+
+export enum MessageCode {
+  MSG_WELCOME = 0,
+  MSG_PREFIX = 1,
+  MSG_CALL = 2,
+  MSG_CALL_RESULT = 3,
+  MSG_CALL_ERROR = 4,
+  MSG_SUBSCRIBE = 5,
+  MSG_UNSUBSCRIBE = 6,
+  MSG_PUBLISH = 7,
+  MSG_EVENT = 8,
+}
 
 class RpcCallError extends Error implements RpcCallErrorInterface {
   public topic: string

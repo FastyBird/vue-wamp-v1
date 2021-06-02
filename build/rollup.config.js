@@ -5,7 +5,8 @@ import vue from 'rollup-plugin-vue';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
+import dts from 'rollup-plugin-dts';
 import { terser } from 'rollup-plugin-terser';
 import minimist from 'minimist';
 
@@ -24,13 +25,14 @@ const baseConfig = {
   plugins: {
     preVue: [
       alias({
-        resolve: ['.js', '.jsx', '.ts', '.tsx', '.vue'],
+        resolve: ['.js', '.jsx', '.ts', '.tsx', '.d.ts', '.vue'],
         entries: {
           '@': path.resolve(projectRoot, 'src'),
         },
       }),
     ],
     replace: {
+      preventAssignment: true,
       'process.env.NODE_ENV': JSON.stringify('production'),
       'process.env.ES_BUILD': JSON.stringify('false'),
     },
@@ -41,6 +43,7 @@ const baseConfig = {
       },
     },
     babel: {
+      babelHelpers: 'bundled',
       exclude: 'node_modules/**',
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.vue'],
     },
@@ -154,6 +157,37 @@ if (!argv.format || argv.format === 'iife') {
   };
   buildFormats.push(unpkgConfig);
 }
+
+buildFormats.push({
+  ...baseConfig,
+  external,
+  output: {
+    file: 'dist/vue-wamp-v1.d.ts',
+    format: 'es',
+  },
+  plugins: [
+    replace({
+      ...baseConfig.plugins.replace,
+      'process.env.ES_BUILD': JSON.stringify('true'),
+    }),
+    ...baseConfig.plugins.preVue,
+    vue(baseConfig.plugins.vue),
+    babel({
+      ...baseConfig.plugins.babel,
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            targets: esbrowserslist,
+          },
+        ],
+      ],
+    }),
+    commonjs(),
+    dts(),
+  ],
+});
+
 
 // Export config
 export default buildFormats;
