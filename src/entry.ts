@@ -74,3 +74,5 @@ if ('false' === process.env.ES_BUILD) {
 
 // Default export is library as a whole, registered via Vue.use()
 export default plugin;
+
+export * from '@/types/vue-wamp-v1'
