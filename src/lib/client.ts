@@ -62,7 +62,7 @@ export default class WampClient implements WampClientInterface {
   private isConnecting: boolean
   private isLost: boolean
 
-  private logger: WampLoggerInterface
+  private logger: WampLoggerInterface | null
 
   constructor(host: string, logger: WampLoggerInterface) {
     this.wsuri = host
@@ -172,9 +172,9 @@ export default class WampClient implements WampClientInterface {
           this.sessionId = message[0]
 
           if (this.isLost) {
-            this.logger.event('opened re-established connection after lost', this.sessionId, version, server)
+            this.logger !== null && this.logger.event('opened re-established connection after lost', this.sessionId, version, server)
           } else {
-            this.logger.event('opened', this.sessionId, version, server)
+            this.logger !== null && this.logger.event('opened', this.sessionId, version, server)
           }
 
           this.isLost = false
@@ -192,9 +192,9 @@ export default class WampClient implements WampClientInterface {
                 this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, subscription.topic])
 
                 if (!this.subscriptions[index].subscribed) {
-                  this.logger.warn('subscribe failed', subscription.topic)
+                    this.logger !== null && this.logger.warn('subscribe failed', subscription.topic)
                 } else {
-                  this.logger.info('subscribed', subscription.topic)
+                    this.logger !== null && this.logger.info('subscribed', subscription.topic)
                 }
               }
             })
@@ -243,7 +243,7 @@ export default class WampClient implements WampClientInterface {
   }
 
   public subscribe(topic: string, handler: SubscribeCallback): boolean {
-    this.logger.event('subscribe', topic)
+    this.logger !== null && this.logger.event('subscribe', topic)
 
     if (!this.isSubscribed(topic)) {
       this.subscriptions.push({
@@ -262,9 +262,9 @@ export default class WampClient implements WampClientInterface {
         this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, topic])
 
         if (!this.subscriptions[index].subscribed) {
-          this.logger.warn('subscribe failed', topic)
+            this.logger !== null && this.logger.warn('subscribe failed', topic)
         } else {
-          this.logger.info('subscribed', topic)
+            this.logger !== null && this.logger.info('subscribed', topic)
         }
 
         return this.subscriptions[index].subscribed
@@ -275,7 +275,7 @@ export default class WampClient implements WampClientInterface {
   }
 
   public unsubscribe(topic: string, handler: SubscribeCallback): boolean {
-    this.logger.event('unsubscribe', topic)
+    this.logger !== null && this.logger.event('unsubscribe', topic)
 
     for (let i = 0, len = this.subscriptions.length; i < len; i++) {
       if (this.subscriptions[i].topic === topic) {
@@ -301,13 +301,13 @@ export default class WampClient implements WampClientInterface {
   }
 
   public publish(topic: string, event: string, exclude?: Array<string> | null, eligible?: Array<string> | null): boolean {
-    this.logger.event('publish', topic, event, exclude, eligible)
+    this.logger !== null && this.logger.event('publish', topic, event, exclude, eligible)
 
     return this.send([MessageCode.MSG_PUBLISH, event, exclude, eligible])
   }
 
   public call(topic: string, ...data: any): RpCallPromise {
-    this.logger.event('call', topic)
+    this.logger !== null && this.logger.event('call', topic)
 
     const callId = Math.random().toString(36).substring(2)
 
@@ -393,15 +393,15 @@ export default class WampClient implements WampClientInterface {
    */
   private send(message: Array<any>): boolean {
     if (this.socket === null) {
-      this.logger.error('not.connected')
+        this.logger !== null && this.logger.error('not.connected')
 
       return false
     } else if (this.isConnecting) {
-      this.logger.error('connecting')
+        this.logger !== null && this.logger.error('connecting')
 
       return false
     } else if (!this.isConnected) {
-      this.logger.error('lost')
+        this.logger !== null && this.logger.error('lost')
 
       return false
     } else {
@@ -410,7 +410,7 @@ export default class WampClient implements WampClientInterface {
 
         return true
       } catch (e) {
-        this.logger.error('send.error')
+        this.logger !== null && this.logger.error('send.error')
 
         return false
       }
