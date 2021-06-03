@@ -1,6 +1,6 @@
 # FastyBird WAMPv1 websocket client library
 
-[![Latest stable](https://badgen.net/npm/v/@fastybird/vue-wamp-v1/master?cache=300&style=flast-square)](https://www.npmjs.com/package/@fastybird/vue-wamp-v1)
+[![Latest stable](https://badgen.net/npm/v/@fastybird/vue-wamp-v1?cache=300&style=flast-square)](https://www.npmjs.com/package/@fastybird/vue-wamp-v1)
 [![Downloads total](https://badgen.net/npm/dt/@fastybird/vue-wamp-v1?cache=300&style=flast-square)](https://www.npmjs.com/package/@fastybird/vue-wamp-v1)
 [![Licence](https://badgen.net/npm/license/@fastybird/vue-wamp-v1?cache=300&style=flast-square)](https://www.npmjs.com/package/@fastybird/vue-wamp-v1)
 ![Types](https://badgen.net/npm/types/@fastybird/vue-wamp-v1?cache=300&style=flast-square)
