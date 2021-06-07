@@ -5,7 +5,7 @@ import WampClient from '@/lib/Client'
 import WampLogger from '@/lib/Logger'
 import { InstallFunction, WampClientOptionsInterface } from '@/types/vue-wamp-v1'
 
-const defaultOptions = {
+export const WampClientDefaultOptions = {
     namespace: 'wamp',
     autoReestablish: true,
     autoCloseTimeout: -1,
@@ -17,7 +17,7 @@ const install: InstallFunction<WampClientOptionsInterface> = function installVue
   if (install.installed) return;
   install.installed = true;
 
-  const pluginOptions = {...defaultOptions, ...options};
+  const pluginOptions = {...WampClientDefaultOptions, ...options};
 
   const { namespace } = pluginOptions;
   const injectKey = `$${namespace}`;
