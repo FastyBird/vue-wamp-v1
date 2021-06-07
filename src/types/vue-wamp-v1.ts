@@ -1,6 +1,6 @@
-import Vue, { PluginFunction } from 'vue'
+import { PluginFunction } from 'vue'
 
-export interface InstallFunction extends PluginFunction<any> {
+export interface InstallFunction<T> extends PluginFunction<T> {
   installed?: boolean;
 }
 
@@ -11,23 +11,20 @@ export type OnDisconnectCallback = () => void
 
 export type SubscribeCallback = (content: string) => void
 
-export interface RpCallResponse<T = any> {
+export interface RpCallResponse<T> {
   data: T
-}
-
-export interface RpCallPromise<T = any> extends Promise<RpCallResponse<T>> {
 }
 
 export interface RpcCallErrorInterface extends Error {
   topic: string
   message: string
-  details: string | Array<any> | null
+  details: string | any[] | null
 }
 
 export interface WampSubscriptionInterface {
   topic: string
   subscribed: boolean
-  callbacks: Array<SubscribeCallback>
+  callbacks: SubscribeCallback[]
 }
 
 export interface WampRpCallInterface {
@@ -49,9 +46,9 @@ export interface WampClientInterface {
 
   isSubscribed(topic: string): boolean
 
-  publish(topic: string, event: string, exclude?: Array<string> | null, eligible?: Array<string> | null): boolean
+  publish(topic: string, event: string, exclude?: string[] | null, eligible?: string[] | null): boolean
 
-  call(topic: string, ...data: any): RpCallPromise
+  call<T>(topic: string, ...data: any): Promise<RpCallResponse<T>>
 
   onOpenEvent(listener: OnOpenCallback): void
 
@@ -88,7 +85,7 @@ export interface WampClientOptionsInterface {
   autoCloseTimeout: number,
 }
 
-declare const VueWampV1: { install: InstallFunction }
+declare const VueWampV1: { install: InstallFunction<WampClientOptionsInterface> }
 
 declare module 'vue/types/vue' {
   interface Vue {
@@ -97,15 +94,6 @@ declare module 'vue/types/vue' {
 
   interface VueConstructor {
     $wamp: WampClientInterface
-  }
-}
-
-declare module 'vue/types/options' {
-  interface ComponentOptions<V extends Vue> {
-    wamp?: {
-      subscribe?: {},
-      register?: {},
-    }
   }
 }
 

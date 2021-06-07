@@ -1,8 +1,8 @@
 import { WampLoggerInterface } from '@/types/vue-wamp-v1'
 
-export default class WampLogger implements WampLoggerInterface {
-  private debug: boolean = false
-  private prefix: string = '%cVue-Wamp: '
+export default class Logger implements WampLoggerInterface {
+  private debug = false
+  private prefix = '%cVue-Wamp: '
 
   constructor(debug: boolean) {
     this.debug = debug

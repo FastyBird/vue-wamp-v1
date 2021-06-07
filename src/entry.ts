@@ -1,11 +1,11 @@
-import _Vue from 'vue';
+import _Vue from 'vue'
 
 // Import library
-import WampClient from '@/lib/client';
-import WampLogger from '@/lib/logger';
-import { InstallFunction } from '@/types/vue-wamp-v1'
+import WampClient from '@/lib/Client'
+import WampLogger from '@/lib/Logger'
+import { InstallFunction, WampClientOptionsInterface } from '@/types/vue-wamp-v1'
 
-export const defaultOptions = {
+const defaultOptions = {
     namespace: 'wamp',
     autoReestablish: true,
     autoCloseTimeout: -1,
@@ -13,16 +13,16 @@ export const defaultOptions = {
 }
 
 // install function executed by Vue.use()
-const install: InstallFunction = function installVueWampV1(Vue: typeof _Vue, options) {
+const install: InstallFunction<WampClientOptionsInterface> = function installVueWampV1(Vue: typeof _Vue, options) {
   if (install.installed) return;
   install.installed = true;
 
-  const {namespace} = options;
+  const pluginOptions = {...defaultOptions, ...options};
+
+  const { namespace } = pluginOptions;
   const injectKey = `$${namespace}`;
 
-  options = {...defaultOptions, ...options};
-
-  const wampClient = new WampClient(options.wsuri, new WampLogger(options.debug));
+  const wampClient = new WampClient(pluginOptions.wsuri as string, new WampLogger(pluginOptions.debug));
 
   if (!Object.prototype.hasOwnProperty.call(Vue, injectKey)) {
     Object.defineProperties(Vue, {
@@ -58,7 +58,7 @@ const plugin = {
 // To auto-install on non-es builds, when vue is found
 // eslint-disable-next-line no-redeclare
 /* global window, global */
-// @ts-ignore
+// eslint-disable-next-line no-constant-condition
 if ('false' === process.env.ES_BUILD) {
   let GlobalVue = null;
   if (typeof window !== 'undefined') {

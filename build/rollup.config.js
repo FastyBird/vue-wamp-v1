@@ -1,13 +1,13 @@
 // rollup.config.js
 import fs from 'fs';
 import path from 'path';
-import vue from 'rollup-plugin-vue';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
 import babel from '@rollup/plugin-babel';
+import eslint from '@rollup/plugin-eslint';
 import dts from 'rollup-plugin-dts';
-import { terser } from 'rollup-plugin-terser';
+import {terser} from 'rollup-plugin-terser';
 import minimist from 'minimist';
 
 // Get browserslist config and remove ie from es build targets
@@ -22,32 +22,29 @@ const projectRoot = path.resolve(__dirname, '..');
 
 const baseConfig = {
   input: 'src/entry.ts',
-  plugins: {
-    preVue: [
-      alias({
-        resolve: ['.js', '.jsx', '.ts', '.tsx', '.d.ts', '.vue'],
-        entries: {
-          '@': path.resolve(projectRoot, 'src'),
-        },
-      }),
-    ],
-    replace: {
-      preventAssignment: true,
-      'process.env.NODE_ENV': JSON.stringify('production'),
-      'process.env.ES_BUILD': JSON.stringify('false'),
-    },
-    vue: {
-      css: true,
-      template: {
-        isProduction: true,
+};
+
+const basePlugins = {
+  forAll: [
+    alias({
+      resolve: ['.js', '.ts'],
+      entries: {
+        '@': path.resolve(projectRoot, 'src'),
       },
-    },
-    babel: {
-      babelHelpers: 'bundled',
-      exclude: 'node_modules/**',
-      extensions: ['.js', '.jsx', '.ts', '.tsx', '.vue'],
-    },
+    }),
+    eslint(),
+  ],
+  replace: {
+    preventAssignment: true,
+    'process.env.NODE_ENV': JSON.stringify('production'),
+    'process.env.ES_BUILD': JSON.stringify('false'),
   },
+};
+
+const babelConfig = {
+  babelHelpers: 'bundled',
+  exclude: 'node_modules/**',
+  extensions: ['.js', '.ts',],
 };
 
 // ESM/UMD/IIFE shared settings: externals
@@ -63,11 +60,12 @@ const external = [
 const globals = {
   // Provide global variable names to replace your external imports
   // eg. jquery: '$'
-  vue: 'Vue',
+  'vue' : 'Vue',
 };
 
 // Customize configs for individual targets
 const buildFormats = [];
+
 if (!argv.format || argv.format === 'es') {
   const esConfig = {
     ...baseConfig,
@@ -79,13 +77,12 @@ if (!argv.format || argv.format === 'es') {
     },
     plugins: [
       replace({
-        ...baseConfig.plugins.replace,
+        ...basePlugins.replace,
         'process.env.ES_BUILD': JSON.stringify('true'),
       }),
-      ...baseConfig.plugins.preVue,
-      vue(baseConfig.plugins.vue),
+      ...basePlugins.forAll,
       babel({
-        ...baseConfig.plugins.babel,
+        ...babelConfig,
         presets: [
           [
             '@babel/preset-env',
@@ -114,16 +111,9 @@ if (!argv.format || argv.format === 'cjs') {
       globals,
     },
     plugins: [
-      replace(baseConfig.plugins.replace),
-      ...baseConfig.plugins.preVue,
-      vue({
-        ...baseConfig.plugins.vue,
-        template: {
-          ...baseConfig.plugins.vue.template,
-          optimizeSSR: true,
-        },
-      }),
-      babel(baseConfig.plugins.babel),
+      replace(basePlugins.replace),
+      ...basePlugins.forAll,
+      babel(babelConfig),
       commonjs(),
     ],
   };
@@ -143,10 +133,9 @@ if (!argv.format || argv.format === 'iife') {
       globals,
     },
     plugins: [
-      replace(baseConfig.plugins.replace),
-      ...baseConfig.plugins.preVue,
-      vue(baseConfig.plugins.vue),
-      babel(baseConfig.plugins.babel),
+      replace(basePlugins.replace),
+      ...basePlugins.forAll,
+      babel(babelConfig),
       commonjs(),
       terser({
         output: {
@@ -167,13 +156,12 @@ buildFormats.push({
   },
   plugins: [
     replace({
-      ...baseConfig.plugins.replace,
+      ...basePlugins.replace,
       'process.env.ES_BUILD': JSON.stringify('true'),
     }),
-    ...baseConfig.plugins.preVue,
-    vue(baseConfig.plugins.vue),
+    ...basePlugins.forAll,
     babel({
-      ...baseConfig.plugins.babel,
+      ...babelConfig,
       presets: [
         [
           '@babel/preset-env',
@@ -187,7 +175,6 @@ buildFormats.push({
     dts(),
   ],
 });
-
 
 // Export config
 export default buildFormats;

@@ -1,8 +1,12 @@
+import Logger from '@/lib/Logger'
+import RpcCallError from '@/lib/RpcCallError'
+import { MessageCode } from '@/lib/constants'
 import {
   OnCloseCallback,
-  OnConnectCallback, OnDisconnectCallback,
-  OnOpenCallback, RpCallPromise,
-  RpcCallErrorInterface,
+  OnConnectCallback,
+  OnDisconnectCallback,
+  OnOpenCallback,
+  RpCallResponse,
   SubscribeCallback,
   WampClientInterface,
   WampLoggerInterface,
@@ -10,61 +14,27 @@ import {
   WampSubscriptionInterface,
 } from '@/types/vue-wamp-v1'
 
-export enum MessageCode {
-  MSG_WELCOME = 0,
-  MSG_PREFIX = 1,
-  MSG_CALL = 2,
-  MSG_CALL_RESULT = 3,
-  MSG_CALL_ERROR = 4,
-  MSG_SUBSCRIBE = 5,
-  MSG_UNSUBSCRIBE = 6,
-  MSG_PUBLISH = 7,
-  MSG_EVENT = 8,
-}
-
-class RpcCallError extends Error implements RpcCallErrorInterface {
-  public topic: string
-  public message: string
-
-  public details: string | Array<any> | null
-
-  constructor(topic: string, message: string, ...params: any) {
-    // Pass remaining arguments (including vendor specific ones) to parent constructor
-    super(...params)
-
-    // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, RpcCallError)
-    }
-
-    // Custom debugging information
-    this.topic = topic
-    this.message = message
-    this.details = null
-  }
-}
-
-export default class WampClient implements WampClientInterface {
+export default class Client implements WampClientInterface {
   private readonly wsuri: string
 
   private socket: WebSocket | null
   private sessionId: string | null = null
 
-  private onOpenEvents: Array<OnOpenCallback>
-  private onCloseEvents: Array<OnCloseCallback>
-  private onConnectEvents: Array<OnConnectCallback>
-  private onDisconnectEvents: Array<OnDisconnectCallback>
+  private onOpenEvents: OnOpenCallback[]
+  private onCloseEvents: OnCloseCallback[]
+  private onConnectEvents: OnConnectCallback[]
+  private onDisconnectEvents: OnDisconnectCallback[]
 
-  private subscriptions: Array<WampSubscriptionInterface>
-  private rpcCalls: Array<WampRpCallInterface>
+  private subscriptions: WampSubscriptionInterface[]
+  private rpcCalls: WampRpCallInterface[]
 
   private isConnected: boolean
   private isConnecting: boolean
   private isLost: boolean
 
-  private logger: WampLoggerInterface | null
+  private logger: WampLoggerInterface
 
-  constructor(host: string, logger: WampLoggerInterface) {
+  constructor(host: string, logger: WampLoggerInterface | null) {
     this.wsuri = host
 
     this.socket = null
@@ -82,7 +52,7 @@ export default class WampClient implements WampClientInterface {
     this.isConnected = false
     this.isConnecting = false
 
-    this.logger = logger
+    this.logger = logger === null ? new Logger(false) : logger
   }
 
   public open(): void {
@@ -146,7 +116,7 @@ export default class WampClient implements WampClientInterface {
     })
 
     this.socket.addEventListener('message', (event): void => {
-      let message: Array<any> = []
+      let message: any[] = []
 
       try {
         // Parse received message
@@ -161,7 +131,7 @@ export default class WampClient implements WampClientInterface {
       switch (code) {
         // Welcome
         // [code: number, wamp session: string, wamp version: number, server info: string]
-        case MessageCode.MSG_WELCOME:
+        case MessageCode.MSG_WELCOME: {
           const version: number = message[1]
           const server: string = message[2]
 
@@ -172,9 +142,9 @@ export default class WampClient implements WampClientInterface {
           this.sessionId = message[0]
 
           if (this.isLost) {
-            this.logger !== null && this.logger.event('opened re-established connection after lost', this.sessionId, version, server)
+            this.logger.event('opened re-established connection after lost', this.sessionId, version, server)
           } else {
-            this.logger !== null && this.logger.event('opened', this.sessionId, version, server)
+            this.logger.event('opened', this.sessionId, version, server)
           }
 
           this.isLost = false
@@ -192,13 +162,14 @@ export default class WampClient implements WampClientInterface {
                 this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, subscription.topic])
 
                 if (!this.subscriptions[index].subscribed) {
-                    this.logger !== null && this.logger.warn('subscribe failed', subscription.topic)
+                  this.logger.warn('subscribe failed', subscription.topic)
                 } else {
-                    this.logger !== null && this.logger.info('subscribed', subscription.topic)
+                  this.logger.info('subscribed', subscription.topic)
                 }
               }
             })
           break
+        }
 
         // RPC Call result
         case MessageCode.MSG_CALL_RESULT:
@@ -213,7 +184,7 @@ export default class WampClient implements WampClientInterface {
         // Event
         case MessageCode.MSG_EVENT:
           this.subscriptions
-            .filter(({topic}) => topic === message[0])
+            .filter(({ topic }) => topic === message[0])
             .forEach((subscription): void => {
               subscription.callbacks.forEach(callback => {
                 callback(message[1])
@@ -243,7 +214,7 @@ export default class WampClient implements WampClientInterface {
   }
 
   public subscribe(topic: string, handler: SubscribeCallback): boolean {
-    this.logger !== null && this.logger.event('subscribe', topic)
+    this.logger.event('subscribe', topic)
 
     if (!this.isSubscribed(topic)) {
       this.subscriptions.push({
@@ -262,9 +233,9 @@ export default class WampClient implements WampClientInterface {
         this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, topic])
 
         if (!this.subscriptions[index].subscribed) {
-            this.logger !== null && this.logger.warn('subscribe failed', topic)
+          this.logger.warn('subscribe failed', topic)
         } else {
-            this.logger !== null && this.logger.info('subscribed', topic)
+          this.logger.info('subscribed', topic)
         }
 
         return this.subscriptions[index].subscribed
@@ -275,11 +246,13 @@ export default class WampClient implements WampClientInterface {
   }
 
   public unsubscribe(topic: string, handler: SubscribeCallback): boolean {
-    this.logger !== null && this.logger.event('unsubscribe', topic)
+    this.logger.event('unsubscribe', topic)
 
     for (let i = 0, len = this.subscriptions.length; i < len; i++) {
       if (this.subscriptions[i].topic === topic) {
-        for (let j = 0, callLen = this.subscriptions[i].callbacks.length; j < callLen; i++) {
+        const callLen = this.subscriptions[i].callbacks.length
+
+        for (let j = 0; j < callLen; j++) {
           if (this.subscriptions[i].callbacks[j] === handler) {
             this.subscriptions[i].callbacks.splice(i, 1)
 
@@ -300,14 +273,15 @@ export default class WampClient implements WampClientInterface {
     return this.subscriptions.findIndex((subscription): boolean => subscription.topic === topic) !== -1
   }
 
-  public publish(topic: string, event: string, exclude?: Array<string> | null, eligible?: Array<string> | null): boolean {
-    this.logger !== null && this.logger.event('publish', topic, event, exclude, eligible)
+  public publish(topic: string, event: string, exclude?: string[] | null, eligible?: string[] | null): boolean {
+    this.logger.event('publish', topic, event, exclude, eligible)
 
     return this.send([MessageCode.MSG_PUBLISH, event, exclude, eligible])
   }
 
-  public call(topic: string, ...data: any): RpCallPromise {
-    this.logger !== null && this.logger.event('call', topic)
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  public call<T>(topic: string, ...data: any): Promise<RpCallResponse<T>> {
+    this.logger.event('call', topic)
 
     const callId = Math.random().toString(36).substring(2)
 
@@ -385,23 +359,23 @@ export default class WampClient implements WampClientInterface {
   /**
    * Send data via websockets
    *
-   * @param {Array<any>} message
+   * @param {any[]} message
    *
    * @return boolean
    *
    * @private
    */
-  private send(message: Array<any>): boolean {
+  private send(message: any[]): boolean {
     if (this.socket === null) {
-        this.logger !== null && this.logger.error('not.connected')
+      this.logger.error('not.connected')
 
       return false
     } else if (this.isConnecting) {
-        this.logger !== null && this.logger.error('connecting')
+      this.logger.error('connecting')
 
       return false
     } else if (!this.isConnected) {
-        this.logger !== null && this.logger.error('lost')
+      this.logger.error('lost')
 
       return false
     } else {
@@ -410,7 +384,7 @@ export default class WampClient implements WampClientInterface {
 
         return true
       } catch (e) {
-        this.logger !== null && this.logger.error('send.error')
+        this.logger.error('send.error')
 
         return false
       }
@@ -420,19 +394,19 @@ export default class WampClient implements WampClientInterface {
   /**
    * Handle RPC result
    *
-   * @param {Array<any>} message
+   * @param {any[]} message
    * @param {number} code
    *
    * @private
    */
-  private rpcCallResult(message: Array<any>, code: number): void {
-    const rpcCall = this.rpcCalls.find(({id}): boolean => id === message[0])
+  private rpcCallResult(message: any[], code: number): void {
+    const rpcCall = this.rpcCalls.find(({ id }): boolean => id === message[0])
 
     if (typeof rpcCall === 'undefined') {
       return
     }
 
-    const index = this.rpcCalls.findIndex(({id}): boolean => id === message[0])
+    const index = this.rpcCalls.findIndex(({ id }): boolean => id === message[0])
 
     if (index !== -1) {
       this.rpcCalls.splice(index, 1)
