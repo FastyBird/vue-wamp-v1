@@ -10,11 +10,6 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:json/recommended"
   ],
-  "ignorePatterns": [
-    "babel.config.js",
-    "@nuxt/*",
-    "build/*"
-  ],
   "rules": {
     "lines-between-class-members": [
       "error",

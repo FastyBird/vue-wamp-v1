@@ -35,7 +35,7 @@
     "build:ssr": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format cjs",
     "build:es": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format es",
     "build:unpkg": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format iife",
-    "lint:js": "eslint src/**/* --ext \".js,.ts,.json,\" --ignore-path .gitignore .",
+    "lint:js": "eslint src/**/* --ext \".js,.ts,.json,\" --ignore-path .gitignore src/",
     "lint:ts": "tslint -c tslint.json 'src/**/*.ts'"
   },
   "dependencies": {},
