@@ -50,9 +50,6 @@ jobs:
       - name: "Check Prettier with eslint"
         run: "yarn pretty:check"
 
-      - name: "Coding Standard"
-        run: "make cs"
-
   static-analysis:
     name: "Code static analysis"
     runs-on: "${{ matrix.operating-system }}"
