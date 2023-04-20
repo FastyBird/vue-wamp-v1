@@ -22,9 +22,9 @@ export function createWampV1Client(): InstallFunction {
 
 			const pluginOptions = { ...WampClientDefaultOptions, ...options };
 
-			const wampClient = new Client(pluginOptions.wsuri as string, new Logger(pluginOptions.debug));
+			this.wampClient = new Client(pluginOptions.wsuri as string, new Logger(pluginOptions.debug));
 
-			app.provide(key, wampClient);
+			app.provide(key, this.wampClient);
 		},
 	};
 
