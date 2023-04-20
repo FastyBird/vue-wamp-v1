@@ -1,8 +1,6 @@
 import { Plugin, Ref } from 'vue';
 
-import { Client } from '@/Client';
-
-export type InstallFunction = Plugin & { installed?: boolean; wampClient?: Client };
+export type InstallFunction = Plugin & { installed?: boolean; wampClient?: IWampClient };
 
 export type OnOpenCallback = () => void;
 export type OnCloseCallback = (code: number, reason: string | null) => void;
