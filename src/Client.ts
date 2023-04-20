@@ -1,22 +1,22 @@
 import { Logger } from '@/Logger';
 import { RpcCallError } from '@/RpcCallError';
-import { MessageCode } from '@/types';
 import {
+	IWampClient,
+	IWampLogger,
+	IWampRpCall,
+	IWampSubscription,
+	MessageCode,
 	OnCloseCallback,
 	OnConnectCallback,
 	OnDisconnectCallback,
 	OnOpenCallback,
 	RpCallResponse,
 	SubscribeCallback,
-	IWampClient,
-	IWampLogger,
-	IWampRpCall,
-	IWampSubscription,
 } from '@/types';
 import { Ref, ref } from 'vue';
 
 export class Client implements IWampClient {
-	private readonly wsuri: string;
+	private wsuriValue: string;
 
 	private socket: WebSocket | null;
 	private sessionId: string | null = null;
@@ -33,10 +33,10 @@ export class Client implements IWampClient {
 	public isConnecting: Ref<boolean>;
 	public isLost: Ref<boolean>;
 
-	private logger: IWampLogger;
+	private clientLogger: IWampLogger;
 
 	constructor(host: string, logger: IWampLogger | null) {
-		this.wsuri = host;
+		this.wsuriValue = host;
 
 		this.socket = null;
 		this.sessionId = null;
@@ -53,7 +53,23 @@ export class Client implements IWampClient {
 		this.isConnected = ref<boolean>(false);
 		this.isConnecting = ref<boolean>(false);
 
-		this.logger = logger === null ? new Logger(false) : logger;
+		this.clientLogger = logger === null ? new Logger(false) : logger;
+	}
+
+	set host(host: string) {
+		if (this.isConnected) {
+			throw new Error('WS host for connected client could not be changed');
+		}
+
+		this.wsuriValue = host;
+	}
+
+	get host(): string {
+		return this.wsuriValue;
+	}
+
+	set logger(logger: IWampLogger) {
+		this.logger = logger;
 	}
 
 	public open(): void {
@@ -63,7 +79,7 @@ export class Client implements IWampClient {
 
 		try {
 			// Open connection to WS server
-			this.socket = new WebSocket(this.wsuri);
+			this.socket = new WebSocket(this.wsuriValue);
 		} catch (e) {
 			throw new Error('Connection could not be established');
 		}
@@ -138,9 +154,9 @@ export class Client implements IWampClient {
 					this.sessionId = message[0];
 
 					if (this.isLost.value) {
-						this.logger.event('opened re-established connection after lost', this.sessionId, version, server);
+						this.clientLogger.event('opened re-established connection after lost', this.sessionId, version, server);
 					} else {
-						this.logger.event('opened', this.sessionId, version, server);
+						this.clientLogger.event('opened', this.sessionId, version, server);
 					}
 
 					this.isLost.value = false;
@@ -156,9 +172,9 @@ export class Client implements IWampClient {
 							this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, subscription.topic]);
 
 							if (!this.subscriptions[index].subscribed) {
-								this.logger.warn('subscribe failed', subscription.topic);
+								this.clientLogger.warn('subscribe failed', subscription.topic);
 							} else {
-								this.logger.info('subscribed', subscription.topic);
+								this.clientLogger.info('subscribed', subscription.topic);
 							}
 						}
 					});
@@ -208,7 +224,7 @@ export class Client implements IWampClient {
 	}
 
 	public subscribe(topic: string, handler: SubscribeCallback): boolean {
-		this.logger.event('subscribe', topic);
+		this.clientLogger.event('subscribe', topic);
 
 		if (!this.isSubscribed(topic)) {
 			this.subscriptions.push({
@@ -227,9 +243,9 @@ export class Client implements IWampClient {
 				this.subscriptions[index].subscribed = this.send([MessageCode.MSG_SUBSCRIBE, topic]);
 
 				if (!this.subscriptions[index].subscribed) {
-					this.logger.warn('subscribe failed', topic);
+					this.clientLogger.warn('subscribe failed', topic);
 				} else {
-					this.logger.info('subscribed', topic);
+					this.clientLogger.info('subscribed', topic);
 				}
 
 				return this.subscriptions[index].subscribed;
@@ -240,7 +256,7 @@ export class Client implements IWampClient {
 	}
 
 	public unsubscribe(topic: string, handler: SubscribeCallback): boolean {
-		this.logger.event('unsubscribe', topic);
+		this.clientLogger.event('unsubscribe', topic);
 
 		for (let i = 0, len = this.subscriptions.length; i < len; i++) {
 			if (this.subscriptions[i].topic === topic) {
@@ -268,14 +284,14 @@ export class Client implements IWampClient {
 	}
 
 	public publish(topic: string, event: string, exclude?: string[] | null, eligible?: string[] | null): boolean {
-		this.logger.event('publish', topic, event, exclude, eligible);
+		this.clientLogger.event('publish', topic, event, exclude, eligible);
 
 		return this.send([MessageCode.MSG_PUBLISH, event, exclude, eligible]);
 	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	public call<T>(topic: string, ...data: any): Promise<RpCallResponse<T>> {
-		this.logger.event('call', topic);
+		this.clientLogger.event('call', topic);
 
 		const callId = Math.random().toString(36).substring(2);
 
@@ -361,15 +377,15 @@ export class Client implements IWampClient {
 	 */
 	private send(message: any[]): boolean {
 		if (this.socket === null) {
-			this.logger.error('not.connected');
+			this.clientLogger.error('not.connected');
 
 			return false;
 		} else if (this.isConnecting.value) {
-			this.logger.error('connecting');
+			this.clientLogger.error('connecting');
 
 			return false;
 		} else if (!this.isConnected.value) {
-			this.logger.error('lost');
+			this.clientLogger.error('lost');
 
 			return false;
 		} else {
@@ -378,7 +394,7 @@ export class Client implements IWampClient {
 
 				return true;
 			} catch (e) {
-				this.logger.error('send.error');
+				this.clientLogger.error('send.error');
 
 				return false;
 			}
@@ -429,3 +445,11 @@ export class Client implements IWampClient {
 		}
 	}
 }
+
+export function createInstance(host: string, debug = false): IWampClient {
+	return new Client(host, new Logger(debug));
+}
+
+const wampClient = createInstance('ws://localhost:8080');
+
+export default wampClient;

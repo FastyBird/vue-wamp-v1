@@ -34,6 +34,12 @@ export interface IWampClient {
 	isConnecting: Ref<boolean>;
 	isLost: Ref<boolean>;
 
+	set host(host: string);
+
+	get host(): string;
+
+	set logger(logger: IWampLogger);
+
 	open(): void;
 
 	reconnect(): void;
@@ -78,7 +84,7 @@ export interface IWampLogger {
 }
 
 export interface PluginOptions {
-	wsuri: string;
+	host: string;
 	debug: boolean;
 	autoReestablish: boolean;
 	autoCloseTimeout: number;
