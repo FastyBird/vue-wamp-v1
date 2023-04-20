@@ -1,7 +1,5 @@
 import { Plugin, Ref } from 'vue';
 
-export type InstallFunction = Plugin & { installed?: boolean; wampClient?: IWampClient };
-
 export type OnOpenCallback = () => void;
 export type OnCloseCallback = (code: number, reason: string | null) => void;
 export type OnConnectCallback = () => void;
@@ -105,3 +103,5 @@ export enum MessageCode {
 	MSG_PUBLISH = 7,
 	MSG_EVENT = 8,
 }
+
+export type InstallFunction = Plugin & { installed?: boolean; wampClient?: IWampClient };
