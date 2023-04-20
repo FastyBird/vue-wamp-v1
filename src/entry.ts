@@ -1,7 +1,7 @@
 import { App } from 'vue';
 
 // Import library
-import { Client } from '@/Client';
+import wampClient, { Client } from '@/Client';
 import { Logger } from '@/Logger';
 import { key, useWampV1Client } from '@/useWampV1Client';
 import { InstallFunction, PluginOptions } from '@/types';
@@ -22,7 +22,8 @@ export function createWampV1Client(): InstallFunction {
 
 			const pluginOptions = { ...WampClientDefaultOptions, ...options };
 
-			this.wampClient = new Client(pluginOptions.wsuri as string, new Logger(pluginOptions.debug));
+			wampClient.host = pluginOptions.host;
+			wampClient.logger = new Logger(pluginOptions.debug);
 
 			app.provide(key, this.wampClient);
 		},
@@ -31,6 +32,6 @@ export function createWampV1Client(): InstallFunction {
 	return plugin;
 }
 
-export { Client, useWampV1Client };
+export { Client, useWampV1Client, wampClient };
 
 export * from '@/types';
