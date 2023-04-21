@@ -19,7 +19,7 @@ export function createWampV1Client(): InstallFunction {
 				return;
 			}
 			this.installed = true;
-            this.wampClient = wampClient;
+			this.wampClient = wampClient;
 
 			const pluginOptions = { ...WampClientDefaultOptions, ...options };
 
