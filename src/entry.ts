@@ -19,13 +19,14 @@ export function createWampV1Client(): InstallFunction {
 				return;
 			}
 			this.installed = true;
+            this.wampClient = wampClient;
 
 			const pluginOptions = { ...WampClientDefaultOptions, ...options };
 
 			wampClient.host = pluginOptions.host;
 			wampClient.logger = new Logger(pluginOptions.debug);
 
-			app.provide(key, this.wampClient);
+			app.provide(key, wampClient);
 		},
 	};
 
