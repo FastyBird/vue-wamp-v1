@@ -1,6 +1,6 @@
 {
   "name": "@fastybird/vue-wamp-v1",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "WAMPv1 websockets client for VUE 3",
   "keywords": [
     "ws",
