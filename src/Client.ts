@@ -57,7 +57,7 @@ export class Client implements IWampClient {
 	}
 
 	set host(host: string) {
-		if (this.isConnected) {
+		if (this.isConnected.value || this.isConnecting.value) {
 			throw new Error('WS host for connected client could not be changed');
 		}
 
